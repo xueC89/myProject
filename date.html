@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <style>
+        a{
+            text-decoration: none;
+        }
+        table,thead,tbody{
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<script>
+
+    function Calendar(yNow, mNow){
+        var nDate = new Date();
+
+        this.nYear = nDate.getFullYear();
+        this.nMonth = nDate.getMonth();
+        this.year = yNow || this.nYear;
+        this.month = mNow-1 || this.nMonth;
+        this.date = nDate.getDate();
+        this.mArr = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+        this.tr = '';
+    }    
+
+    Calendar.prototype.isLeap = function(year){
+        // 判断是否闰年
+        return (year%100 == 0 ? (year%400==0 ? 1:0) : (year%4==0 ? 1:0));
+    }
+
+    Calendar.prototype.firstDay = function(){
+        // 获取当前月份1号是星期几
+        var mDay1 = new Date(this.year, this.month, 1);
+        this.fDay = mDay1.getDay();
+    }
+
+    Calendar.prototype.loopTr = function(year, month){
+        // 生成日期
+        var mDays = [31, 28+this.isLeap(this.year), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        var trLine = Math.ceil( (mDays[this.month] + this.fDay) / 7 );
+        var tr = '';
+        var td = '';
+
+        for(var i=0; i<trLine; i++){ // 表格的行
+            tr += '<tr>';
+            for(var j=0; j<7; j++){ // 表格每行的单元格
+                var idx = i * 7 + j; // 单元格序列号
+                var dateStr = idx - this.fDay + 1; // 计算日期
+                (dateStr <= 0 || dateStr > mDays[this.month]) ? dateStr = '&nbsp;' : dateStr = idx - this.fDay + 1; //过滤无效日期（小于等于零的、大于月总天数的）
+                (dateStr == this.date && year == this.nYear && month == this.nMonth) ? td = '<td bgcolor="red">'+ dateStr +'</td>' : td = '<td>'+ dateStr +'</td>';
+                tr += td;
+            }
+            tr += '</tr>';
+        }
+        
+        this.tr = tr;
+    }
+
+    Calendar.prototype.tbHtml = function(){
+        // 日历头部 年 月 星期
+        var tb = '<table border="1" align="center" width="500" cellspacing="0">'+
+                '<thead>'+
+                    '<tr>'+
+                        '<th>'+ '<a href="#" id="year-before"> < </a>' + '</th>'+
+                        '<th colspan="5" id="year">'+ this.year + '年 </th>'+
+                        '<th>'+ '<a href="#" id="year-after"> > </a>' + '</th>'+
+                    '</tr>'+
+                    '<tr>'+
+                        '<th>'+ '<a href="#" id="month-before"> << </a>' + '</th>'+
+                        '<th colspan="5" id="month">'+ this.mArr[this.month] + '</th>'+
+                        '<th>'+ '<a href="#" id="month-after"> >> </a>' + '</th>'+
+                    '</tr>'+
+                    '<tr>'+
+                        '<th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th>'+
+                    '</tr>'+
+                '</thead>'+
+                '<tbody id = "htmlTr"></tbody>'+
+            '</table>';
+        return tb;
+        
+    }
+
+    Calendar.prototype.appendTb = function(){
+        var tb = this.tbHtml();
+        document.body.innerHTML = tb;
+        
+        this.domCache = {
+            yY : document.getElementById('year'),
+            mM : document.getElementById('month'),
+            yP : document.getElementById('year-before'),
+            yN : document.getElementById('year-after'),
+            mP : document.getElementById('month-before'),
+            mN : document.getElementById('month-after')
+        }
+    }
+
+    Calendar.prototype.appendHtml = function(){
+        document.getElementById('year').innerHTML = this.year + '年';
+        document.getElementById('month').innerHTML = this.mArr[this.month];
+        document.getElementById('htmlTr').innerHTML = this.tr;
+    }
+
+    Calendar.prototype.setDate = function(year, month){
+        var self = this;
+        this.year = year;
+        this.month = month;
+        setTimeout(function(){
+            self.updateHtml();
+        }, 0);
+    }
+
+    Calendar.prototype.updateHtml = function(){
+        this.firstDay();
+        this.loopTr(this.year, this.month);
+        this.appendHtml();
+    }
+
+    Calendar.prototype.eventInit = function(){
+        var self = this;
+        self.domCache.yP.addEventListener('click', function(){
+            self.year--
+            self.setDate(self.year, self.month);
+        }, false);
+        self.domCache.yN.addEventListener('click', function(){
+            self.year++
+            self.setDate(self.year, self.month);
+        }, false);
+        self.domCache.mP.addEventListener('click', function(){
+            self.month--
+
+            if(self.month<0){
+                self.month = 11;
+                self.year--;
+            }
+            self.setDate(self.year, self.month);
+        }, false);
+        self.domCache.mN.addEventListener('click', function(){
+            self.month++
+            if(self.month>11){
+                self.month = 0;
+                self.year++;
+            }
+            self.setDate(self.year, self.month);
+        }, false);
+
+        
+    }
+
+    Calendar.prototype.init = function(){
+        this.appendTb();
+        this.updateHtml();
+        this.eventInit();
+    }
+
+    var calendar = new Calendar();
+    calendar.init();   
+    
+</script>
+
+</body>
+</html>
